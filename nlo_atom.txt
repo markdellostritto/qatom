@@ -1,0 +1,59 @@
+# General Simulation Parameters
+	SIMULATION  = Al2O3-001-H2O_cp_md_nve.xdatcar # simulation
+	FILE_FORMAT = XDATCAR # file format	
+	#SIMULATION  = Al2O3-001-H2O.in,Al2O3-001-H2O.data,Al2O3-001-H2O.dump # simulation
+	#FILE_FORMAT = LAMMPS # file format	
+	INTERVAL    = BEG,40001 # timestep interval for performing calculations (needs to be a multiple of STRIDE_ALPHA plus 1)
+	VERSION     = 2 # type of calculation (keep on 2)
+# units
+	UNITS = AU # units used in calculation (AU = atomic units)
+# atoms
+	ATOMS = O H Al # atoms
+# thole-v
+	IDD        = ERF # interaction - dipole-dipole
+	ALPHA      = 5.57999 3.12865 12.7868 # gas phase atomic polarizabilities
+	A          = 1 # scaling constant for interatomic distances
+	LIN_SOLVER = PPLU # linear solver
+	INTER      = TRUE # calculate interactions
+	ALPHA_R    = TRUE # scale alpha
+# qeq3
+	ICC        = ERF # interaction - charge-charge
+	JZERO      = 0.636241 0.691945 5.12483 # atom idempotentials
+	K          = 1.0 # scaling constant for interatomic distances
+	LIN_SOLVER = PPLU # linear solver
+	ELECTRONEGATIVITY = MULLIKEN # type of electronegativity
+# profile
+	#PROFILE_CALC = 2.5,0.0,47.07 # profile for summing over atoms for chi2 - all
+	PROFILE_CALC = 2.5,8.5,26.25 # profile for summing over atoms for chi2 - bottom
+	#PROFILE_CALC = 2.5,8.75,26.5 # profile for summing over atoms for chi2 - top
+	OFFSET = 0, 0, -9.6 # offset - bottom center
+	#OFFSET = 0, 0, -27.1 # offset - top center
+# Files
+	FILE_ALPHA     = alpha_thole.dat # file storing molecular polarizabilities
+	FILE_SPECTRUM  = nlo_atom_bm.dat # file storing chi2
+	#FILE_SPECTRUM  = nlo_atom_tm.dat # file storing chi2
+# Summation parameters 
+	PREC_EWALD = 0.00001 # precision of the ewald calculation
+# Calculation flags
+	PRINT_ALPHA_TOT  = F # whether to print total alpha
+	PRINT_DIPOLE_TOT = F # whether to print total dipole
+	PRINT_CHG_TOT    = F # whether to print total charge
+	CALC_ALPHA       = T # whether to calc thole alphas
+	CALC_CHG	 = T # whether to calc qeq3 charge
+	CALC_SPECTRUM    = T # whether to calc spectrum
+# Fourier Parameters
+	STRIDE_ALPHA  = 5 # every n steps calc alpha
+	STRIDE_CHARGE = 5 # every n steps calc charge
+	FREQ_UNIT     = THZ # frequency unit
+	FREQ_CUT      = 140 # frequency upper cutoff
+	WINDOW        = BLACKMAN-HARRIS # fourier window
+	NORMALIZE     = F # whether to normalize spectrum
+# Bonding
+	bond length O H 2.2
+	bond length O Al 4.21
+	bond order O 4
+	bond order Al 6
+	bond order H 1
+	hbond length O 4.36
+	hbond angle 30
+
