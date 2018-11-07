@@ -1,0 +1,16 @@
+REQUIREMENTS:
+	Eigen library (http://eigen.tuxfamily.org/)
+		Modify DIR1 to point to the directory where the Eigen library is installed
+	FFTW library (version 3 or greater)
+INSTRUCTIONS:
+	raman_thole.exe
+		computes raman spectrum from molecular dynamics simulation
+		to build: "make raman"
+	ir_qeq.exe
+		computes ir spectrum from molecular dynamics simulation
+		to build: "make ir"
+	nlo_atom.exe
+		computes SFG spectrum from molecular dynamics simulation
+		to build: "make nlo"
+
+# qatom
