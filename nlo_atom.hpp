@@ -15,11 +15,8 @@
 //fftw
 #include <fftw3.h>
 //simulation
-#include "sim.hpp"
-#include "atom.hpp"
-#include "molecule.hpp"
-#include "sim_util.hpp"
-//loading
+#include "structure.hpp"
+//reading
 #include "vasp.hpp"
 #include "lammps.hpp"
 #include "qe.hpp"
@@ -32,25 +29,17 @@
 #include "math_gradient.hpp"
 #include "interpolation.hpp"
 //electrostatics
-#include "electrostatics_util.hpp"
 #include "ewald3D.hpp"
 //polarizability
 #include "thole.hpp"
 //charge transfer
-#include "qeq3.hpp"
+#include "qeq.hpp"
 //units
 #include "units.hpp"
 
 #ifndef DEBUG_NLO_ATOM
-#define DEBUG_NLO_ATOM 1
+#define DEBUG_NLO_ATOM 0
 #endif
-
-//***********************************************************************************************************************************
-//typedefs
-//***********************************************************************************************************************************
-
-typedef Atom<Name,AN,Species,Index,Mass,Position,Charge,Alpha,JZero> AtomT;
-typedef Molecule<AtomT,Index,Charge,Mass,Position,Dipole> MolT;
 
 //***********************************************************************************************************************************
 //Profile
@@ -108,7 +97,6 @@ public:
 class NLO{
 private:
 	//FFT parameters
-		fourier::FreqUnit::type freqUnit_;//the unit of the frequency
 		double freqCut_;//the cutoff for printing the frequency
 		unsigned int freqN_;//the integer cutoff for printing the frequency 
 		double minFreq_;//the minimum frequency possible, given the number of timesteps
@@ -126,30 +114,37 @@ private:
 		window::WINDOW_FUNC::type windowType_;
 	//profile
 		Profile profileCalc_;
-		Profile profileLoad_;
 	//file i/o
-		std::string fileSpectrum_;//file where the spectrum is printed
+		std::string fileSpectrum_;
+		std::string fileDipoleT_;
+		std::string fileAlphaT_;
+		std::string fileChgT_;
+		std::string fileAlphaA_;
+		std::string fileChgA_;
 	//calculation flags
 		bool calcChg_;//whether we will calculate atomic charges
 		bool calcAlpha_;//whether we will calculate atomic alphas
 		bool calcSpectrum_;//whether we will calculate the spectrum
 		bool normalize_;//whether to normalize the spectrum
 	//i/o flags
-		bool printAlphaT_;
-		bool printDipoleT_;
-		bool printChgT_;
-		bool printChg_;
+		bool writeDipoleT_;
+		bool writeAlphaT_;
+		bool writeAlphaA_;
+		bool readAlphaA_;
+		bool writeChgT_;
+		bool writeChgA_;
+		bool readChgA_;
 	//ir spectrum
 		std::vector<std::vector<std::vector<std::vector<Complex> > > > chi2_;
-	//logging
-		logging::DebugLogger log;
+	//temperature
+		double T_;
 public:
 	//constants
 	static const double mevPerThz;
 	static const double cmiPerThz;
 	
 	//costructors/destructors
-	NLO():log("NLO"){defaults();};
+	NLO(){defaults();};
 	~NLO(){};
 	
 	//operators
@@ -167,31 +162,50 @@ public:
 		bool& normalize(){return normalize_;};
 		const bool& normalize()const{return normalize_;};
 	//i/o flags
-		bool& printAlphaT(){return printAlphaT_;};
-		const bool& printAlphaT()const{return printAlphaT_;};
-		bool& printDipoleT(){return printDipoleT_;};
-		const bool& printDipoleT()const{return printDipoleT_;};
-		bool& printChgT(){return printChgT_;};
-		const bool& printChgT()const{return printChgT_;};
-		bool& printChg(){return printChg_;};
-		const bool& printChg()const{return printChg_;};
+		bool& writeDipoleT(){return writeDipoleT_;};
+		const bool& writeDipoleT()const{return writeDipoleT_;};
+		bool& writeAlphaT(){return writeAlphaT_;};
+		const bool& writeAlphaT()const{return writeAlphaT_;};
+		bool& writeAlphaA(){return writeAlphaA_;};
+		const bool& writeAlphaA()const{return writeAlphaA_;};
+		bool& readAlphaA(){return readAlphaA_;};
+		const bool& readAlphaA()const{return readAlphaA_;};
+		bool& writeChgT(){return writeChgT_;};
+		const bool& writeChgT()const{return writeChgT_;};
+		bool& writeChgA(){return writeChgA_;};
+		const bool& writeChgA()const{return writeChgA_;};
+		bool& readChgA(){return readChgA_;};
+		const bool& readChgA()const{return readChgA_;};
 	//file i/o
 		std::string& fileSpectrum(){return fileSpectrum_;};
 		const std::string& fileSpectrum()const{return fileSpectrum_;};
+		std::string& fileDipoleT(){return fileDipoleT_;};
+		const std::string& fileDipoleT()const{return fileDipoleT_;};
+		std::string& fileAlphaT(){return fileAlphaT_;};
+		const std::string& fileAlphaT()const{return fileAlphaT_;};
+		std::string& fileChgT(){return fileChgT_;};
+		const std::string& fileChgT()const{return fileChgT_;};
+		std::string& fileAlphaA(){return fileAlphaA_;};
+		const std::string& fileAlphaA()const{return fileAlphaA_;};
+		std::string& fileChgA(){return fileChgA_;};
+		const std::string& fileChgA()const{return fileChgA_;};
 	//profile
 		Profile& profileCalc(){return profileCalc_;};
 		const Profile& profileCalc()const{return profileCalc_;};
+	//temperature
+		double& T(){return T_;}
+		const double& T()const{return T_;}
 	
 	//member functions
 		void defaults();
 		void clear(){defaults();};
-		void init(SimAtomic<AtomT>& sim);
+		void init(Simulation& sim);
 	//spectra
-		void calcChg(SimAtomic<AtomT>& sim, const QEQ3& qeq, const Ewald3D::Coulomb& ewald);
-		void calcAlpha(SimAtomic<AtomT>& sim, const Thole& thole, const Ewald3D::Dipole& ewald);
-		void calcSpectrum(SimAtomic<AtomT>& sim, Bonding& bonding);
-	//loading/printing
-		void load(const char* file);
+		void calcChg(Simulation& sim, const QEQ& qeq, const Ewald3D::Coulomb& ewald);
+		void calcAlpha(Simulation& sim, const Thole& thole, const Ewald3D::Dipole& ewald);
+		void calcSpectrum(Simulation& sim);
+	//reading/printing
+		void read(const char* file);
 		void printSpectrum(const char* file)const;
 };
 
