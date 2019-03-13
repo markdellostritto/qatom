@@ -16,14 +16,11 @@
 //fftw
 #include <fftw3.h>
 //simulation
-#include "sim.hpp"
-#include "atom.hpp"
-#include "molecule.hpp"
-#include "sim_util.hpp"
+#include "structure.hpp"
 //loading
 #include "vasp.hpp"
 #include "lammps.hpp"
-#include "gaussian.hpp"
+#include "qe.hpp"
 #include "string.hpp"
 //signal analysis
 #include "signal.hpp"
@@ -33,21 +30,14 @@
 #include "math_gradient.hpp"
 #include "interpolation.hpp"
 //electrostatics
-#include "electrostatics_util.hpp"
 #include "ewald3D.hpp"
 #include "thole.hpp"
 //units
 #include "units.hpp"
 
 #ifndef DEBUG_RAMAN3D_THOLEV
-#define DEBUG_RAMAN3D_THOLEV 2
+#define DEBUG_RAMAN3D_THOLEV 0
 #endif
-
-//***********************************************************************************************************************************
-//typedefs
-//***********************************************************************************************************************************
-
-typedef Atom<Name,AN,Species,Index,Position,Alpha> AtomT;
 
 //***********************************************************************************************************************************
 //Profile
@@ -80,32 +70,12 @@ public:
 };
 
 //***********************************************************************************************************************************
-//Complex class
-//***********************************************************************************************************************************
-
-class Complex{
-private:
-	double data[2];
-public:
-	Complex(){};
-	Complex(double r, double i){data[0]=r; data[1]=i;};
-	Complex(const Complex& c){data[0]=c[0]; data[1]=c[1];};
-	~Complex(){};
-	
-	Complex& operator=(const Complex& c){data[0]=c[0]; data[1]=c[1];};
-	double& operator[](int i){return data[i];};
-	const double& operator[](int i)const{return data[i];};
-	friend std::ostream& operator<<(std::ostream& out, const Complex& c){return out<<"("<<c.data[0]<<","<<c.data[1]<<")";};
-};
-
-//***********************************************************************************************************************************
 //Raman3D
 //***********************************************************************************************************************************
 
 class Raman3D{
 private:
 	//FFT parameters
-		fourier::FreqUnit::type freqUnit_;//the unit of the frequency
 		double freqCut_;//the cutoff for printing the frequency
 		unsigned int freqN_;//the integer cutoff for printing the frequency 
 		double minFreq_;//the minimum frequency possible, given the number of timesteps
@@ -123,29 +93,34 @@ private:
 	//profile
 		Profile profileCalc_;
 		Profile profileLoad_;
+	//subset
+		std::string subsetStr_;
+		std::vector<unsigned int> subset_;
 	//file i/o
-		std::string fileSpectrum_;//file where the spectrum is printed
+		std::string fileSpectrum_;//file spectrum
+		std::string fileAlphaT_;//file alpha total
+		std::string fileAlphaA_;//file alpha atom
 	//calculation flags
 		bool calcAlpha_;//whether we will calculate the charges
 		bool calcSpectrum_;//whether we will calculate the spectrum
 		bool normalize_;//whether to normalize the spectrum
 	//i/o flags
-		bool printAlphaT_;
+		bool writeAlphaT_;
+		bool writeAlphaA_;
+		bool readAlphaA_;
 	//ir spectrum
 		std::vector<double> ramanp_;//parallel
 		std::vector<double> ramans_;//perpendicular (senkrecht)
 		std::vector<double> ramant_;//total (sum of squares)
 	//temperature
 		double T_;
-	//logging
-		logging::DebugLogger log;
 public:
 	//constants
 	static const double mevPerThz;
 	static const double cmiPerThz;
 	
 	//costructors/destructors
-	Raman3D():log("Raman3D"){defaults();};
+	Raman3D(){defaults();};
 	~Raman3D(){};
 	
 	//operators
@@ -167,11 +142,19 @@ public:
 		bool& normalize(){return normalize_;};
 		const bool& normalize()const{return normalize_;};
 	//i/o flags
-		bool& printAlphaT(){return printAlphaT_;};
-		const bool& printAlphaT()const{return printAlphaT_;};
+		bool& writeAlphaT(){return writeAlphaT_;};
+		const bool& writeAlphaT()const{return writeAlphaT_;};
+		bool& writeAlphaA(){return writeAlphaA_;};
+		const bool& writeAlphaA()const{return writeAlphaA_;};
+		bool& readAlphaA(){return readAlphaA_;};
+		const bool& readAlphaA()const{return readAlphaA_;};
 	//file i/o
 		std::string& fileSpectrum(){return fileSpectrum_;};
 		const std::string& fileSpectrum()const{return fileSpectrum_;};
+		std::string& fileAlphaT(){return fileAlphaT_;};
+		const std::string& fileAlphaT()const{return fileAlphaT_;};
+		std::string& fileAlphaA(){return fileAlphaA_;};
+		const std::string& fileAlphaA()const{return fileAlphaA_;};
 	//profile
 		Profile& profileCalc(){return profileCalc_;};
 		const Profile& profileCalc()const{return profileCalc_;};
@@ -179,14 +162,12 @@ public:
 	//member functions
 		void defaults();
 		void clear(){defaults();};
-		void init(SimAtomic<AtomT>& sim);
+		void init(Simulation& sim);
 	//spectra
-		void calcAlpha(SimAtomic<AtomT>& sim, const Thole& thole, const Ewald3D::Dipole& ewald);
-		void calcSpectrum(SimAtomic<AtomT>& sim);
-		void calcSpectrum2(SimAtomic<AtomT>& sim);
-		void calcSpectrum3(SimAtomic<AtomT>& sim);
+		void calcAlpha(Simulation& sim, const Thole& thole, const Ewald3D::Dipole& ewald);
+		void calcSpectrum(Simulation& sim);
 	//loading/printing
-		void load(const char* file);
+		void read(const char* file);
 		void printSpectrum(const char* file)const;
 };
 
