@@ -17,14 +17,11 @@
 //fftw
 #include <fftw3.h>
 //simulation
-#include "sim.hpp"
-#include "atom.hpp"
-#include "molecule.hpp"
-#include "bonding.hpp"
-#include "sim_util.hpp"
-//loading
+#include "structure.hpp"
+//reading
 #include "vasp.hpp"
 #include "lammps.hpp"
+#include "qe.hpp"
 #include "string.hpp"
 //signal analysis
 #include "signal.hpp"
@@ -34,20 +31,12 @@
 #include "math_gradient.hpp"
 #include "interpolation.hpp"
 //electrostatics
-#include "electrostatics_util.hpp"
 #include "ewald3D.hpp"
-#include "qeq3.hpp"
+#include "qeq.hpp"
 
 #ifndef DEBUG_IR_QEQ
-#define DEBUG_IR_QEQ 1
+#define DEBUG_IR_QEQ 0
 #endif
-
-//***********************************************************************************************************************************
-//typedefs
-//***********************************************************************************************************************************
-
-typedef Atom<Name,AN,Mass,Species,Index,Position,Charge,JZero> AtomT;
-typedef Molecule<AtomT,Index,Position,Charge,Dipole> MoleculeT;
 
 //***********************************************************************************************************************************
 //Profile
@@ -119,29 +108,33 @@ private:
 		double sigma_;
 		std::function<double (int)> window_;
 		window::WINDOW_FUNC::type windowType_;
+	//temp
+		double T_;
 	//profile
 		Profile profile_;
 	//file i/o
-		std::string fileSpectrum_;//file where the spectrum is printed
+		std::string fileSpectrum_;//spectrum file
+		std::string fileDipoleT_;//dipole total file
+		std::string fileChgT_;//chg total file
+		std::string fileChgA_;//chg atom file
 	//calculation flags
 		bool calcChg_;//whether we will calculate the charges
 		bool calcSpectrum_;//whether we will calculate the spectrum
 		bool normalize_;//whether to normalize the spectrum
 	//i/o flags
-		bool printDipoleT_;
-		bool printChgT_;
-		bool printChg_;
+		bool writeDipoleT_;
+		bool writeChgT_;
+		bool writeChgA_;
+		bool readChgA_;
 	//ir spectrum
 		std::vector<double> irSpectrum_;
-	//logging
-		logging::DebugLogger log;
 public:
 	//constants
 	static const double mevPerThz;
 	static const double cmiPerThz;
 	
 	//costructors/destructors
-	IRQEQ():log("IRQEQ"){defaults();};
+	IRQEQ(){defaults();};
 	~IRQEQ(){};
 	
 	//operators
@@ -157,28 +150,39 @@ public:
 		bool& normalize(){return normalize_;};
 		const bool& normalize()const{return normalize_;};
 	//i/o flags
-		bool& printDipoleT(){return printDipoleT_;};
-		const bool& printDipoleT()const{return printDipoleT_;};
-		bool& printChgT(){return printChgT_;};
-		const bool& printChgT()const{return printChgT_;};
-		bool& printChg(){return printChg_;};
-		const bool& printChg()const{return printChg_;};
+		bool& writeDipoleT(){return writeDipoleT_;};
+		const bool& writeDipoleT()const{return writeDipoleT_;};
+		bool& writeChgT(){return writeChgT_;};
+		const bool& writeChgT()const{return writeChgT_;};
+		bool& writeChgA(){return writeChgA_;};
+		const bool& writeChgA()const{return writeChgA_;};
+		bool& readChgA(){return readChgA_;};
+		const bool& readChgA()const{return readChgA_;};
 	//file i/o
 		std::string& fileSpectrum(){return fileSpectrum_;};
 		const std::string& fileSpectrum()const{return fileSpectrum_;};
+		std::string& fileDipoleT(){return fileDipoleT_;};
+		const std::string& fileDipoleT()const{return fileDipoleT_;};
+		std::string& fileChgT(){return fileChgT_;};
+		const std::string& fileChgT()const{return fileChgT_;};
+		std::string& fileChgA(){return fileChgA_;};
+		const std::string& fileChgA()const{return fileChgA_;};
 	//profile
 		Profile& profile(){return profile_;};
 		const Profile& profile()const{return profile_;};
+	//temp
+		double& T(){return T_;}
+		const double& T()const{return T_;}
 	
 	//member functions
 		void defaults();
 		void clear(){defaults();};
-		void init(SimAtomic<AtomT>& sim);
+		void init(Simulation& sim);
 	//spectra
-		void calcChg(SimAtomic<AtomT>& sim, const QEQ3& qeq, const Ewald3D::Coulomb& ewald);
-		void calcSpectrum(SimAtomic<AtomT>& sim, const Bonding& bonding);
+		void calcChg(Simulation& sim, const QEQ& qeq, const Ewald3D::Coulomb& ewald);
+		void calcSpectrum(Simulation& sim);
 	//loading/printing
-		void load(const char* file);
+		void read(const char* file);
 		void printSpectrum(const char* file)const;
 };
 
