@@ -24,6 +24,16 @@ char* to_lower(char* str){
 	return str;
 }
 
+std::string& to_upper(std::string& str){
+	for(unsigned int i=0; i<str.size(); ++i) str[i]=std::toupper(str[i]);
+	return str;
+}
+
+std::string& to_lower(std::string& str){
+	for(unsigned int i=0; i<str.size(); ++i) str[i]=std::tolower(str[i]);
+	return str;
+}
+
 //******************************************************
 //Trimming
 //******************************************************
@@ -136,7 +146,7 @@ unsigned int substrN(const char* str, const char* delim){
 //Splitting string
 //******************************************************
 
-std::vector<std::string>& split(const char* str, const char* delim, std::vector<std::string>& strlist){
+unsigned int split(const char* str, const char* delim, std::vector<std::string>& strlist){
 	unsigned int n=substrN(str,delim);
 	strlist.resize(n);
 	n=0;
@@ -146,6 +156,7 @@ std::vector<std::string>& split(const char* str, const char* delim, std::vector<
 		str=std::strpbrk(str,delim)+1;
 	}
 	if(std::strlen(str)>0) strlist[n++]=std::string(str,std::strlen(str));
+	return strlist.size();
 }
 
 

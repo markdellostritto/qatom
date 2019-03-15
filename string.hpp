@@ -25,6 +25,8 @@ namespace string{
 	//******************************************************
 	char* to_upper(char* str);
 	char* to_lower(char* str);
+	std::string& to_upper(std::string& str);
+	std::string& to_lower(std::string& str);
 	
 	//******************************************************
 	//Trimming
@@ -54,7 +56,7 @@ namespace string{
 	//Splitting string
 	//******************************************************
 	
-	std::vector<std::string>& split(const char* str, const char* delim, std::vector<std::string>& strlist);
+	unsigned int split(const char* str, const char* delim, std::vector<std::string>& strlist);
 	
 }	
 
