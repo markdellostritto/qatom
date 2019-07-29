@@ -6,7 +6,7 @@ namespace fourier{
 //FreqUnit struct
 //***********************************************************************************************************************************
 
-FreqUnit::type FreqUnit::load(const char* str){
+FreqUnit::type FreqUnit::read(const char* str){
 	if(std::strcmp(str,"THZ")==0) return FreqUnit::THZ;
 	else if(std::strcmp(str,"MEV")==0) return FreqUnit::MEV;
 	else if(std::strcmp(str,"CMI")==0) return FreqUnit::CMI;

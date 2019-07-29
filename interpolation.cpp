@@ -2,7 +2,7 @@
 
 namespace Interp{
 	
-	INTERP_METHOD::type INTERP_METHOD::load(const char* str){
+	INTERP_METHOD::type INTERP_METHOD::read(const char* str){
 		if(std::strcmp(str,"LINEAR")==0) return INTERP_METHOD::LINEAR;
 		else if(std::strcmp(str,"AKIMA")==0) return INTERP_METHOD::AKIMA;
 		else return INTERP_METHOD::UNKNOWN;
@@ -98,7 +98,7 @@ namespace Interp{
 	
 	double interpLinear(double x, const std::vector<double>& X, const std::vector<double>& Y){
 		int i=index(x,X);
-		return Y[i]+(Y[i+1]-Y[i])/(X[i+1]-X[i])*x;
+		return Y[i]+(Y[i+1]-Y[i])/(X[i+1]-X[i])*(x-X[i]);
 	}
 	
 	//**************************************************************

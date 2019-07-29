@@ -10,7 +10,7 @@ const double IDD::erf_const=std::pow(2.0/(9.0*num_const::PI),1.0/6.0);
 // Form
 //*******************************************************
 
-IDD::Form IDD::load(const char* str){
+IDD::Form IDD::read(const char* str){
 	if(std::strcmp(str,"IDEAL")==0) return IDD::Form::IDEAL;
 	else if(std::strcmp(str,"LINEAR")==0) return IDD::Form::LINEAR;
 	else if(std::strcmp(str,"EXP")==0) return IDD::Form::EXP;
@@ -32,7 +32,7 @@ std::ostream& operator<<(std::ostream& out, const IDD::Form& t){
 //*******************************************************
 
 Eigen::Matrix3d& IDD::itensor_ideal(const Eigen::Vector3d& r, Eigen::Matrix3d& mat, double a){
-	double dr=r.norm();
+	const double dr=r.norm();
 	//mat.noalias()=(3.0*r*r.transpose()-Eigen::Matrix3d::Identity()*dr*dr)/(dr*dr*dr*dr*dr);
 	mat.noalias()=3.0*r*r.transpose();
 	mat.noalias()-=Eigen::Matrix3d::Identity()*dr*dr;
@@ -41,15 +41,15 @@ Eigen::Matrix3d& IDD::itensor_ideal(const Eigen::Vector3d& r, Eigen::Matrix3d& m
 }
 
 Eigen::Matrix3d& IDD::itensor_exp(const Eigen::Vector3d& r, Eigen::Matrix3d& mat, double a){
-	double dr=r.norm();
-	double b=a*dr;
+	const double dr=r.norm();
+	const double b=a*dr;
 	mat.noalias()=r*r.transpose()*3*(1.0-((1.0/6.0)*b*b*b+0.5*b*b+b+1)*std::exp(-b))/(dr*dr*dr*dr*dr)
 		-Eigen::Matrix3d::Identity()*(1.0-(0.5*b*b+b+1)*std::exp(-b))/(dr*dr*dr);
 	return mat;
 }
 
 Eigen::Matrix3d& IDD::itensor_linear(const Eigen::Vector3d& r, Eigen::Matrix3d& mat, double a){
-	double dr=r.norm();
+	const double dr=r.norm();
 	double c5,c3;
 	if(dr<a){c5=3.0*std::pow(dr/a,4.0); c3=4.0*std::pow(dr/a,3.0)-c5;}
 	else {c5=3.0; c3=1.0;};
@@ -58,8 +58,8 @@ Eigen::Matrix3d& IDD::itensor_linear(const Eigen::Vector3d& r, Eigen::Matrix3d& 
 };
 
 Eigen::Matrix3d& IDD::itensor_erf(const Eigen::Vector3d& r, Eigen::Matrix3d& mat, double a){
-	double dr=r.norm();
-	double exp=2.0/num_const::RadPI*a*std::exp(-dr*dr*a*a);
+	const double dr=r.norm();
+	const double exp=2.0/num_const::RadPI*a*std::exp(-dr*dr*a*a);
 	mat.noalias()=3.0*r*r.transpose();
 	mat.noalias()-=Eigen::Matrix3d::Identity()*dr*dr;
 	mat*=(std::erf(dr*a)-dr*exp)/(dr*dr*dr*dr*dr);
@@ -84,7 +84,11 @@ double IDD::scale_linear(double a1, double a2){
 }
 
 double IDD::scale_erf(double a1, double a2){
-	return 1.0/(erf_const*std::sqrt(std::pow(a1,2.0/3.0)+std::pow(a2,2.0/3.0)));
+	//return 1.0/(std::sqrt(std::pow(std::sqrt(2.0/3.14159)/3.0*a1,2.0/3.0)+std::pow(std::sqrt(2.0/3.14159)/3.0*a2,2.0/3.0)));
+	//return 1.0/(std::sqrt(std::pow(4.0/(3.0*std::sqrt(3.14159))*a1,2.0/3.0)+std::pow(4.0/(3.0*std::sqrt(3.14159))*a2,2.0/3.0)));
+	return 1.0/(std::sqrt(std::pow(2.0/(3.0*std::sqrt(3.14159))*a1,2.0/3.0)+std::pow(2.0/(3.0*std::sqrt(3.14159))*a2,2.0/3.0)));
+	//return 1.0/(std::pow(1.0/(6.0*std::sqrt(3.14159))*a1,1.0/3.0)+std::pow(1.0/(6.0*std::sqrt(3.14159))*a2,1.0/3.0));
+	//return 1.0/std::pow(16.0/(9.0*3.14159)*a1*a2,1.0/6.0);
 }
 
 //*******************************************************

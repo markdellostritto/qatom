@@ -45,6 +45,11 @@ std::ostream& operator<<(std::ostream& out, const NLO& nlo){
 	out<<"FILE_CHG_TOT     = "<<nlo.fileChgT_<<"\n";
 	out<<"FILE_ALPHA_ATOM  = "<<nlo.fileAlphaA_<<"\n";
 	out<<"FILE_CHG_ATOM    = "<<nlo.fileChgA_<<"\n";
+	if(nlo.subset_.size()>0){
+		out<<"SUBSET           = ";
+		for(unsigned int i=0; i<nlo.subset_.size(); ++i) std::cout<<nlo.subset_[i]<<" ";
+		std::cout<<"\n";
+	}
 	out<<"******************* NLO_ATOM *******************\n";
 	out<<"*************************************************";
 	return out;
@@ -87,6 +92,9 @@ void NLO::defaults(){
 		writeChgA_=false;
 		readAlphaA_=false;
 		readChgA_=false;
+	//subset
+		subsetstr_.clear();
+		subset_.clear();
 	//chi2 spectrum
 		chi2_.clear();
 }
@@ -140,7 +148,7 @@ void NLO::read(const char* file){
 			} else if(strlist.at(0)=="WRITE_ALPHA_TOT"){
 				writeAlphaT_=string::boolean(string::to_upper(strlist.at(1)).c_str());
 			} else if(strlist.at(0)=="WRITE_ALPHA_ATOM"){
-				writeAlphaT_=string::boolean(string::to_upper(strlist.at(1)).c_str());
+				writeAlphaA_=string::boolean(string::to_upper(strlist.at(1)).c_str());
 			} else if(strlist.at(0)=="WRITE_CHG_TOT"){
 				writeChgT_=string::boolean(string::to_upper(strlist.at(1)).c_str());
 			} else if(strlist.at(0)=="WRITE_CHG_ATOM"){
@@ -165,7 +173,9 @@ void NLO::read(const char* file){
 				profileCalc_.sigma()=std::atof(strlist.at(1).c_str());
 				profileCalc_.b1()=std::atof(strlist.at(2).c_str());
 				profileCalc_.b2()=std::atof(strlist.at(3).c_str());
-			} 
+			} else if(strlist.at(0)=="SUBSET_CALC"){
+				subsetstr_=strlist.at(1);
+			}
 		}
 		
 		//close the parameter file
@@ -233,6 +243,10 @@ void NLO::init(Simulation& sim){
 			}
 		}
 		
+		//read the subset
+		if(DEBUG_NLO_ATOM>0) std::cout<<"Reading the subset...\n";
+		if(subsetstr_.size()>0) Structure::read_atoms(subsetstr_.c_str(),subset_,sim.frame(0));
+		
 	}catch(std::exception& e){
 		std::cout<<"ERROR in read(const char*):\n";
 		std::cout<<e.what()<<"\n";
@@ -242,11 +256,12 @@ void NLO::init(Simulation& sim){
 
 void NLO::calcAlpha(Simulation& sim, const Thole& thole, const Ewald3D::Dipole& ewald){
 	if(DEBUG_NLO_ATOM>0) std::cout<<"calcAlpha(Simulation&,const Thole&,const Ewald3D::Dipole&):\n";
-	//local function variables
+	//==== local function variables ====
 	//parallel
-		unsigned int nThreads=1;
 		#ifdef _OPENMP
-			nThreads=omp_get_max_threads();
+			const unsigned int nThreads=omp_get_max_threads();
+		#else
+			const unsigned int nThreads=1;
 		#endif
 	//timing
 		clock_t start,stop;
@@ -266,9 +281,10 @@ void NLO::calcAlpha(Simulation& sim, const Thole& thole, const Ewald3D::Dipole& 
 	if(!sim.cell_fixed()){
 		#pragma omp parallel for schedule(static) num_threads(omp_get_max_threads())
 		for(unsigned int t=0; t<sim.timesteps(); t+=strideAlpha_){
-			unsigned int TN=0;
 			#ifdef _OPENMP
-				TN=omp_get_thread_num();
+				const unsigned int TN=omp_get_thread_num();
+			#else
+				const unsigned int TN=0;
 			#endif
 			if(DEBUG_NLO_ATOM>-1) std::cout<<"Timestep: "<<sim.beg()+1+t<<"\n";
 			else if(DEBUG_NLO_ATOM>0 && t%1000==0) std::cout<<"Timestep: "<<sim.beg()+1+t<<"\n";
@@ -278,9 +294,10 @@ void NLO::calcAlpha(Simulation& sim, const Thole& thole, const Ewald3D::Dipole& 
 	} else {
 		#pragma omp parallel for schedule(static) num_threads(omp_get_max_threads())
 		for(unsigned int t=0; t<sim.timesteps(); t+=strideAlpha_){
-			unsigned int TN=0;
 			#ifdef _OPENMP
-				TN=omp_get_thread_num();
+				const unsigned int TN=omp_get_thread_num();
+			#else
+				const unsigned int TN=0;
 			#endif
 			if(DEBUG_NLO_ATOM>-1) std::cout<<"Timestep: "<<sim.beg()+1+t<<"\n";
 			else if(DEBUG_NLO_ATOM>0 && t%1000==0) std::cout<<"Timestep: "<<sim.beg()+1+t<<"\n";
@@ -348,13 +365,11 @@ void NLO::calcChg(Simulation& sim, const QEQ& qeq, const Ewald3D::Coulomb& ewald
 	if(DEBUG_NLO_ATOM>0) std::cout<<"calcChg(Simulation&,const QEQ&,const Ewald3D::Coulomb&):\n";
 	//local function variables
 	//parallel
-		unsigned int nThreads=1;
 		#ifdef _OPENMP
-			nThreads=omp_get_max_threads();
+			const unsigned int nThreads=omp_get_max_threads();
+		#else
+			const unsigned int nThreads=1;
 		#endif
-	//timing
-		clock_t start,stop;
-		double time;
 	//atomic charge
 		std::vector<QEQ> qeq_(nThreads);
 		std::vector<Ewald3D::Coulomb> ewald_(nThreads);
@@ -366,14 +381,15 @@ void NLO::calcChg(Simulation& sim, const QEQ& qeq, const Ewald3D::Coulomb& ewald
 	
 	//calculate the atomic charges
 	if(DEBUG_NLO_ATOM>1) std::cout<<"computing atomic charges...\n";
-	start=std::clock();
+	const clock_t start=std::clock();
 	if(sim.cell_fixed()){
 		if(DEBUG_NLO_ATOM>1) std::cout<<"cell_fixed true\n";
 		#pragma omp parallel for schedule(static) num_threads(omp_get_max_threads())
 		for(unsigned int t=0; t<sim.timesteps(); t+=strideChg_){
-			unsigned int TN=0;
 			#ifdef _OPENMP
-				TN=omp_get_thread_num();
+				const unsigned int TN=omp_get_thread_num();
+			#else
+				const unsigned int TN=0;
 			#endif
 			if(DEBUG_NLO_ATOM>-1) std::cout<<"Timestep: "<<sim.beg()+1+t<<"\n";
 			else if(DEBUG_NLO_ATOM>0 && t%1000==0) std::cout<<"Timestep: "<<sim.beg()+1+t<<"\n";
@@ -383,9 +399,10 @@ void NLO::calcChg(Simulation& sim, const QEQ& qeq, const Ewald3D::Coulomb& ewald
 		if(DEBUG_NLO_ATOM>1) std::cout<<"cell_fixed false\n";
 		#pragma omp parallel for schedule(static) num_threads(omp_get_max_threads())
 		for(unsigned int t=0; t<sim.timesteps(); t+=strideChg_){
-			unsigned int TN=0;
 			#ifdef _OPENMP
-				TN=omp_get_thread_num();
+				const unsigned int TN=omp_get_thread_num();
+			#else
+				const unsigned int TN=0;
 			#endif
 			if(DEBUG_NLO_ATOM>-1) std::cout<<"Timestep: "<<sim.beg()+1+t<<"\n";
 			else if(DEBUG_NLO_ATOM>0 && t%1000==0) std::cout<<"Timestep: "<<sim.beg()+1+t<<"\n";
@@ -393,17 +410,17 @@ void NLO::calcChg(Simulation& sim, const QEQ& qeq, const Ewald3D::Coulomb& ewald
 			qeq_[TN].qt_jZero(sim.frame(t),ewald_[TN]);
 		}
 	}
-	stop=std::clock();
-	time=((double)(stop-start))/CLOCKS_PER_SEC;
+	const clock_t stop=std::clock();
+	const double time=((double)(stop-start))/CLOCKS_PER_SEC;
 	std::cout<<"chg-time = "<<time<<"\n";
 	
 	if(strideChg_>1){
 		if(DEBUG_NLO_ATOM>0) std::cout<<"Interpolating atomic charge...\n";
 		Interp::Data chgData(nStepsChg_+1);
 		//loop over all atoms
-		for(int n=0; n<sim.frame(0).nAtoms(); n++){
+		for(unsigned int n=0; n<sim.frame(0).nAtoms(); ++n){
 			//loop over all timesteps for which we calculated atomic charges
-			for(int t=0; t*strideChg_<sim.timesteps(); t++){
+			for(unsigned int t=0; t*strideChg_<sim.timesteps(); ++t){
 				chgData.x(t)=t*strideChg_;
 				chgData.y(t)=sim.frame(t*strideChg_).charge(n);
 			}
@@ -463,18 +480,25 @@ void NLO::calcSpectrum(Simulation& sim){
 	std::vector<double> qv(sim.timesteps());
 	std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > p(sim.timesteps(),Eigen::Vector3d::Zero());
 	std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > v(sim.timesteps(),Eigen::Vector3d::Zero());
+	//==== atoms ====
+	std::vector<unsigned int> atoms;
+	if(subset_.size()>0) atoms=subset_;
+	else {
+		atoms.resize(sim.frame(0).nAtoms());
+		for(unsigned int i=0; i<atoms.size(); ++i) atoms[i]=i;
+	}
 	
 	//==== no truncation of correlation function ====
 	if(DEBUG_NLO_ATOM>0) std::cout<<"No truncation of correlation function.\n";
 		
 	//==== compute qdotr ====
 	if(DEBUG_NLO_ATOM>0) std::cout<<"computing qdotr...\n";
-	for(unsigned int n=0; n<sim.frame(0).nAtoms(); ++n){
+	for(unsigned int n=0; n<atoms.size(); ++n){
 		unsigned int tt;
 		double ts=sim.timestep();
 		//read the charge
 		for(unsigned int t=0; t<sim.timesteps(); ++t){
-			q[t]=sim.frame(t).charge(n);
+			q[t]=sim.frame(t).charge(atoms[n]);
 		}
 		//compute the charge velocity
 		tt=0; qv[tt]=(q[tt+1]-q[tt])/ts;
@@ -491,23 +515,23 @@ void NLO::calcSpectrum(Simulation& sim){
 		//compute qdotr
 		if(profileCalc_.sigma()>0){
 			for(unsigned int t=0; t<sim.timesteps(); ++t){
-				qdotr[t].noalias()+=qv[t]*sim.frame(t).posn(n)*profileCalc_(sim.frame(t).posn(n)[2]);
+				qdotr[t].noalias()+=qv[t]*sim.frame(t).posn(atoms[n])*profileCalc_(sim.frame(t).posn(atoms[n])[2]);
 			}
 		} else {
 			for(unsigned int t=0; t<sim.timesteps(); ++t){
-				qdotr[t].noalias()+=qv[t]*sim.frame(t).posn(n);
+				qdotr[t].noalias()+=qv[t]*sim.frame(t).posn(atoms[n]);
 			}
 		}
 	}
 	
 	//==== compute qdotq ====
 	if(DEBUG_NLO_ATOM>0) std::cout<<"computing rdotq...\n";
-	for(unsigned int n=0; n<sim.frame(0).nAtoms(); ++n){
+	for(unsigned int n=0; n<atoms.size(); ++n){
 		unsigned int tt;
 		double ts=sim.timestep();
 		//read the position - fractional coordinates
 		for(unsigned int t=0; t<sim.timesteps(); ++t){
-			p[t].noalias()=sim.frame(t).cell().RInv()*sim.frame(t).posn(n);
+			p[t].noalias()=sim.frame(t).cell().RInv()*sim.frame(t).posn(atoms[n]);
 		}
 		//compute the velocities - fractional coordinates
 		tt=0;
@@ -552,11 +576,11 @@ void NLO::calcSpectrum(Simulation& sim){
 		//compute rdotq
 		if(profileCalc_.sigma()>0){
 			for(unsigned int t=0; t<sim.timesteps(); ++t){
-				rdotq[t].noalias()+=v[t]*sim.frame(t).charge(n)*profileCalc_(sim.frame(t).posn(n)[2]);
+				rdotq[t].noalias()+=v[t]*sim.frame(t).charge(atoms[n])*profileCalc_(sim.frame(t).posn(atoms[n])[2]);
 			}
 		} else {
 			for(unsigned int t=0; t<sim.timesteps(); ++t){
-				rdotq[t].noalias()+=v[t]*sim.frame(t).charge(n);
+				rdotq[t].noalias()+=v[t]*sim.frame(t).charge(atoms[n]);
 			}
 		}
 	}
@@ -586,11 +610,11 @@ void NLO::calcSpectrum(Simulation& sim){
 	if(profileCalc_.sigma()>0){
 		if(DEBUG_NLO_ATOM>0) std::cout<<"Applying profile...\n";
 		for(unsigned int t=0; t<sim.timesteps(); ++t){
-			for(unsigned int n=0; n<sim.frame(t).nAtoms(); ++n){
+			for(unsigned int n=0; n<atoms.size(); ++n){
 				double mean=0.0;
 				for(unsigned int i=0; i<3; ++i){
 					for(unsigned int j=0; j<3; ++j){
-						alphaTrans[i][j][t]+=sim.frame(t).alpha(n)(i,j)*profileCalc_(sim.frame(t).posn(n)[2]);
+						alphaTrans[i][j][t]+=sim.frame(t).alpha(atoms[n])(i,j)*profileCalc_(sim.frame(t).posn(atoms[n])[2]);
 					}
 				}
 			}
@@ -598,11 +622,11 @@ void NLO::calcSpectrum(Simulation& sim){
 	} else {
 		if(DEBUG_NLO_ATOM>0) std::cout<<"No profile...\n";
 		for(unsigned int t=0; t<sim.timesteps(); ++t){
-			for(unsigned int n=0; n<sim.frame(t).nAtoms(); ++n){
+			for(unsigned int n=0; n<atoms.size(); ++n){
 				double mean=0.0;
 				for(unsigned int i=0; i<3; ++i){
 					for(unsigned int j=0; j<3; ++j){
-						alphaTrans[i][j][t]+=sim.frame(t).alpha(n)(i,j);
+						alphaTrans[i][j][t]+=sim.frame(t).alpha(atoms[n])(i,j);
 					}
 				}
 			}

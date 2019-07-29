@@ -114,6 +114,9 @@ private:
 		std::vector<double> ramant_;//total (sum of squares)
 	//temperature
 		double T_;
+	//subset
+		std::string subsetstr_;
+		std::vector<unsigned int> subset_;
 public:
 	//constants
 	static const double mevPerThz;
@@ -158,6 +161,9 @@ public:
 	//profile
 		Profile& profileCalc(){return profileCalc_;};
 		const Profile& profileCalc()const{return profileCalc_;};
+	//subset
+		std::vector<unsigned int>& subset(){return subset_;}
+		const std::vector<unsigned int>& subset()const{return subset_;}
 	
 	//member functions
 		void defaults();

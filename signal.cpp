@@ -4,7 +4,6 @@ namespace filter{
 	
 	std::vector<double>& Gauss::gen(double s, std::vector<double>& f){
 		Gauss gauss(s,0.0);
-		//int edge=std::ceil(gauss.s*std::sqrt(-2.0*std::log(0.05/gauss.N)));
 		int edge=3*s;
 		int l=2*edge+1;
 		f.resize(l,0);
@@ -43,7 +42,7 @@ namespace filter{
 
 namespace window{
 	
-	WINDOW_FUNC::type WINDOW_FUNC::load(const char* str){
+	WINDOW_FUNC::type WINDOW_FUNC::read(const char* str){
 		if(std::strcmp(str,"IDENTITY")==0) return WINDOW_FUNC::IDENTITY;
 		else if(std::strcmp(str,"GAUSSIAN")==0) return WINDOW_FUNC::GAUSSIAN;
 		else if(std::strcmp(str,"KAISER-BESSEL")==0) return WINDOW_FUNC::KAISERBESSEL;

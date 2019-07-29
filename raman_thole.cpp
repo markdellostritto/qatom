@@ -39,6 +39,11 @@ std::ostream& operator<<(std::ostream& out, const Raman3D& raman3d){
 	out<<"FILE_SPECTRUM    = "<<raman3d.fileSpectrum_<<"\n";
 	out<<"FILE_ALPHA_TOT   = "<<raman3d.fileAlphaT_<<"\n";
 	out<<"FILE_ALPHA_ATOM  = "<<raman3d.fileAlphaA_<<"\n";
+	if(raman3d.subset_.size()>0){
+		out<<"SUBSET           = ";
+		for(unsigned int i=0; i<raman3d.subset_.size(); ++i) std::cout<<raman3d.subset_[i]<<" ";
+		std::cout<<"\n";
+	}
 	out<<"****************** RAMAN3D_THOLEV ******************\n";
 	out<<"*************************************************";
 	return out;
@@ -222,14 +227,11 @@ void Raman3D::calcAlpha(Simulation& sim, const Thole& thole, const Ewald3D::Dipo
 	if(DEBUG_RAMAN3D_THOLEV>0) std::cout<<"calcAlpha(Simulation&,const Thole&,const Ewald3D::Dipole&):\n";
 	//local function variables
 	//parallel
-		unsigned int nThreads=1;
 		#ifdef _OPENMP
-			nThreads=omp_get_max_threads();
+			const unsigned int nThreads=omp_get_max_threads();
+		#else
+			const unsigned int nThreads=1;
 		#endif
-	//timing
-		std::chrono::high_resolution_clock::time_point start;
-		std::chrono::high_resolution_clock::time_point stop;
-		std::chrono::duration<double> time;
 	//atomic charge
 		std::vector<Thole> thole_(nThreads);
 		std::vector<Ewald3D::Dipole> ewald_(nThreads);
@@ -241,13 +243,14 @@ void Raman3D::calcAlpha(Simulation& sim, const Thole& thole, const Ewald3D::Dipo
 	
 	//calculate the atomic alphas
 	if(DEBUG_RAMAN3D_THOLEV>1) std::cout<<"Calculating Atomic Alphas...\n";
-	start=std::chrono::high_resolution_clock::now();
+	const clock_t start=std::clock();
 	if(!sim.cell_fixed()){
 		#pragma omp parallel for schedule(static) num_threads(omp_get_max_threads())
 		for(unsigned int t=0; t<sim.timesteps(); t+=strideAlpha_){
-			unsigned int TN=0;
 			#ifdef _OPENMP
-				TN=omp_get_thread_num();
+				const unsigned int TN=omp_get_thread_num();
+			#else
+				const unsigned int TN=0;
 			#endif
 			if(DEBUG_RAMAN3D_THOLEV>-1) std::cout<<"Timestep: "<<sim.beg()+1+t<<"\n";
 			else if(DEBUG_RAMAN3D_THOLEV>0 && t%1000==0) std::cout<<"Timestep: "<<sim.beg()+1+t<<"\n";
@@ -257,18 +260,19 @@ void Raman3D::calcAlpha(Simulation& sim, const Thole& thole, const Ewald3D::Dipo
 	} else {
 		#pragma omp parallel for schedule(static) num_threads(omp_get_max_threads())
 		for(unsigned int t=0; t<sim.timesteps(); t+=strideAlpha_){
-			unsigned int TN=0;
 			#ifdef _OPENMP
-				TN=omp_get_thread_num();
+				const unsigned int TN=omp_get_thread_num();
+			#else
+				const unsigned int TN=0;
 			#endif
 			if(DEBUG_RAMAN3D_THOLEV>-1) std::cout<<"Timestep: "<<sim.beg()+1+t<<"\n";
 			else if(DEBUG_RAMAN3D_THOLEV>0 && t%1000==0) std::cout<<"Timestep: "<<sim.beg()+1+t<<"\n";
 			thole_[TN].alpha_cont(sim.frame(t),ewald);
 		}
 	}
-	stop=std::chrono::high_resolution_clock::now();
-	time=std::chrono::duration_cast<std::chrono::duration<double> >(stop-start);
-	std::cout<<"alpha time = "<<time.count()<<"\n";
+	const clock_t strop=std::clock();
+	const double time=((double)(stop-start))/CLOCKS_PER_SEC;
+	std::cout<<"alpha-time = "<<time<<"\n";
 	
 	//interpolate the polarizabilities
 	if(strideAlpha_>1){
@@ -355,32 +359,26 @@ void Raman3D::calcSpectrum(Simulation& sim){
 	for(unsigned int i=0; i<3; ++i){
 		alphaTrans[i].resize(3,std::vector<double>(sim.timesteps(),0));
 	}
+	//atoms
+	std::vector<unsigned int> atoms;
+	if(subset_.size()>0) atoms=subset_;
+	else {
+		atoms.resize(sim.frame(0).nAtoms());
+		for(unsigned int i=0; i<atoms.size(); ++i) atoms[i]=i;
+	}
 	
 	//No truncation of correlation function
 	if(DEBUG_RAMAN3D_THOLEV>0) std::cout<<"No truncation of correlation function.\n";
 	
 	//calculate the transpose of the total polarizability
 	if(DEBUG_RAMAN3D_THOLEV>0) std::cout<<"Calculating the transpose of the total polarizability...\n";
-	if(subset_.size()==0){
-		for(unsigned int t=0; t<TS; ++t){
-			Eigen::Matrix3d alpha=Eigen::Matrix3d::Zero();
-			for(unsigned int n=0; n<sim.frame(t).nAtoms(); ++n) alpha.noalias()+=sim.frame(t).alpha(n);
-			alpha/=sim.frame(t).nAtoms();
-			for(unsigned int i=0; i<3; ++i){
-				for(unsigned int j=0; j<3; ++j){
-					alphaTrans[i][j][t]=alpha(i,j);
-				}
-			}
-		}
-	} else {
-		for(unsigned int t=0; t<TS; ++t){
-			Eigen::Matrix3d alpha=Eigen::Matrix3d::Zero();
-			for(unsigned int n=0; n<subset_.size(); ++n) alpha.noalias()+=sim.frame(t).alpha(subset_[n]);
-			alpha/=sim.frame(t).nAtoms();
-			for(unsigned int i=0; i<3; ++i){
-				for(unsigned int j=0; j<3; ++j){
-					alphaTrans[i][j][t]=alpha(i,j);
-				}
+	for(unsigned int t=0; t<TS; ++t){
+		Eigen::Matrix3d alpha=Eigen::Matrix3d::Zero();
+		for(unsigned int n=0; n<atoms.size(); ++n) alpha.noalias()+=sim.frame(t).alpha(atoms[n]);
+		alpha/=sim.frame(t).nAtoms();
+		for(unsigned int i=0; i<3; ++i){
+			for(unsigned int j=0; j<3; ++j){
+				alphaTrans[i][j][t]=alpha(i,j);
 			}
 		}
 	}

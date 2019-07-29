@@ -5,13 +5,13 @@
 #include <ostream>
 // eigen libraries
 #include <Eigen/Dense>
-// ame
+// local libraries - math
 #include "math_const.hpp"
 #include "math_special.hpp"
+// local libraries - eigen
+#include "eigen.hpp"
 // local libraries - serialization
 #include "serialize.hpp"
-// local libraries - eigen utilities
-#include "eigen.hpp"
 
 //****************************************************************
 //Cell class
@@ -60,6 +60,11 @@ public:
 	static Eigen::Vector3d& fracToCart(const Eigen::Vector3d& vFrac, Eigen::Vector3d& vCart, const Eigen::Matrix3d& R);
 	static Eigen::Vector3d& cartToFrac(const Eigen::Vector3d& vCart, Eigen::Vector3d& vFrac, const Eigen::Matrix3d& RInv);
 	static Eigen::Vector3d& returnToCell(const Eigen::Vector3d& v1, Eigen::Vector3d& v2, const Eigen::Matrix3d& R, const Eigen::Matrix3d& RInv);
+	
+	//static functions - modification
+	static Cell& super(const Eigen::Vector3i& f, Cell& cell);
+	static bool rect(Cell& cell);
+	static bool cubic(Cell& cell);
 	
 	//member functions
 	void defaults();

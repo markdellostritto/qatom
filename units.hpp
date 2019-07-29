@@ -1,10 +1,8 @@
 #ifndef UNITS_HPP
 #define UNITS_HPP
 
-//c libraries
-#include <cstring>
-//c++ libraries
 #include <iostream>
+#include <cstring>
 #include <stdexcept>
 
 namespace units{
@@ -17,12 +15,12 @@ namespace units{
 	
 	struct System{
 		enum type{
-			AU,//atomic units
-			METAL,//metal units (default)
-			IDENTITY,
-			UNKNOWN
+			AU=0,//atomic units
+			METAL=1,//metal units
+			IDENTITY=2,
+			UNKNOWN=-1
 		};
-		static System::type load(const char* str);
+		static System::type read(const char* str);
 	};
 	std::ostream& operator<<(std::ostream& out, const System::type& t);
 	

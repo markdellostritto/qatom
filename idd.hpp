@@ -22,7 +22,7 @@ struct IDD{
 		ERF=3,
 		UNKNOWN=-1
 	};
-	static Form load(const char* str);
+	static Form read(const char* str);
 	// Interaction matrices
 	static Eigen::Matrix3d& itensor_ideal(const Eigen::Vector3d& dr, Eigen::Matrix3d& mat, double a=1.0);
 	static Eigen::Matrix3d& itensor_exp(const Eigen::Vector3d& dr, Eigen::Matrix3d& mat, double a=1.0);

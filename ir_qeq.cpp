@@ -39,6 +39,11 @@ std::ostream& operator<<(std::ostream& out, const IRQEQ& ir3d){
 	out<<"FILE_CHG_TOT     = "<<ir3d.fileChgT_<<"\n";
 	out<<"FILE_CHG_ATOM    = "<<ir3d.fileChgA_<<"\n";
 	out<<"T                = "<<ir3d.T_<<"\n";
+	if(ir3d.subset_.size()>0){
+		out<<"SUBSET           = ";
+		for(unsigned int i=0; i<ir3d.subset_.size(); ++i) std::cout<<ir3d.subset_[i]<<" ";
+		std::cout<<"\n";
+	}
 	out<<"******************** IR_QEQ ********************\n";
 	out<<"*************************************************";
 	return out;
@@ -79,6 +84,9 @@ void IRQEQ::defaults(){
 		T_=300;
 	//ir spectrum
 		irSpectrum_.clear();
+	//subset
+		subsetstr_.clear();
+		subset_.clear();
 }
 
 void IRQEQ::read(const char* file){
@@ -136,6 +144,8 @@ void IRQEQ::read(const char* file){
 				windowType_=window::WINDOW_FUNC::read(string::to_upper(strlist.at(1)).c_str());
 			} else if(strlist.at(0)=="T"){
 				T_=std::atof(strlist.at(1).c_str());
+			} else if(strlist.at(0)=="T"){
+				subsetstr_=strlist.at(1);
 			} else if(strlist.at(0)=="PROFILE_CALC"){
 				profile_.sigma()=std::atof(strlist.at(1).c_str());
 				profile_.b1()=std::atof(strlist.at(2).c_str());
@@ -207,6 +217,10 @@ void IRQEQ::init(Simulation& sim){
 		if(DEBUG_IR_QEQ>0) std::cout<<"Allocating space for ir spectrum...\n";
 		irSpectrum_.resize(freqN_);
 		
+		//read the subset
+		if(DEBUG_NLO_ATOM>0) std::cout<<"Reading the subset...\n";
+		if(subsetstr_.size()>0) Structure::read_atoms(subsetstr_.c_str(),subset_,sim.frame(0));
+		
 	}catch(std::exception& e){
 		std::cout<<"ERROR in read(const char*):\n";
 		std::cout<<e.what()<<"\n";
@@ -218,13 +232,11 @@ void IRQEQ::calcChg(Simulation& sim, const QEQ& qeq, const Ewald3D::Coulomb& ewa
 	if(DEBUG_IR_QEQ>0) std::cout<<"calcChg(Simulation&,const QEQ&,const Ewald3D::Coulomb&):\n";
 	//local function variables
 	//parallel
-		unsigned int nThreads=1;
 		#ifdef _OPENMP
-			nThreads=omp_get_max_threads();
+			const unsigned int nThreads=omp_get_max_threads();
+		#else
+			const unsigned int nThreads=1;
 		#endif
-	//timing
-		clock_t start,stop;
-		double time;
 	//atomic charge
 		std::vector<QEQ> qeq_(nThreads);
 		std::vector<Ewald3D::Coulomb> ewald_(nThreads);
@@ -236,27 +248,28 @@ void IRQEQ::calcChg(Simulation& sim, const QEQ& qeq, const Ewald3D::Coulomb& ewa
 	
 	//calculate the atomic charges
 	if(DEBUG_IR_QEQ>1) std::cout<<"computing atomic charges...\n";
-	start=std::clock();
+	const clock_t start=std::clock();
 	if(sim.cell_fixed()){
 		if(DEBUG_IR_QEQ>1) std::cout<<"cell_fixed true\n";
 		#pragma omp parallel for schedule(static) num_threads(omp_get_max_threads())
 		for(unsigned int t=0; t<sim.timesteps(); t+=strideChg_){
-			unsigned int TN=0;
 			#ifdef _OPENMP
-				TN=omp_get_thread_num();
+				const unsigned int TN=omp_get_thread_num();
+			#else
+				const unsigned int TN=0;
 			#endif
 			if(DEBUG_IR_QEQ>-1) std::cout<<"Timestep: "<<sim.beg()+1+t<<"\n";
 			else if(DEBUG_IR_QEQ>0 && t%1000==0) std::cout<<"Timestep: "<<sim.beg()+1+t<<"\n";
 			qeq_[TN].qt_jZero_cont(sim.frame(t),ewald_[TN]);
-			//qeq_[TN].qt_cont(sim.frame(t),ewald_[TN]);
 		}
 	} else {
 		if(DEBUG_IR_QEQ>1) std::cout<<"cell_fixed false\n";
 		#pragma omp parallel for schedule(static) num_threads(omp_get_max_threads())
 		for(unsigned int t=0; t<sim.timesteps(); t+=strideChg_){
-			unsigned int TN=0;
 			#ifdef _OPENMP
-				TN=omp_get_thread_num();
+				const unsigned int TN=omp_get_thread_num();
+			#else
+				const unsigned int TN=0;
 			#endif
 			if(DEBUG_IR_QEQ>-1) std::cout<<"Timestep: "<<sim.beg()+1+t<<"\n";
 			else if(DEBUG_IR_QEQ>0 && t%1000==0) std::cout<<"Timestep: "<<sim.beg()+1+t<<"\n";
@@ -264,8 +277,8 @@ void IRQEQ::calcChg(Simulation& sim, const QEQ& qeq, const Ewald3D::Coulomb& ewa
 			qeq_[TN].qt_jZero(sim.frame(t),ewald_[TN]);
 		}
 	}
-	stop=std::clock();
-	time=((double)(stop-start))/CLOCKS_PER_SEC;
+	const clock_t stop=std::clock();
+	const double time=((double)(stop-start))/CLOCKS_PER_SEC;
 	std::cout<<"chg-time = "<<time<<"\n";
 	
 	if(strideChg_>1){
@@ -322,15 +335,22 @@ void IRQEQ::calcSpectrum(Simulation& sim){
 	std::vector<double> qv(sim.timesteps());
 	std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > p(sim.timesteps(),Eigen::Vector3d::Zero());
 	std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > v(sim.timesteps(),Eigen::Vector3d::Zero());
+	//==== atoms ====
+	std::vector<unsigned int> atoms;
+	if(subset_.size()>0) atoms=subset_;
+	else {
+		atoms.resize(sim.frame(0).nAtoms());
+		for(unsigned int i=0; i<atoms.size(); ++i) atoms[i]=i;
+	}
 	
 	//compute qdotr
 	if(DEBUG_IR_QEQ>0) std::cout<<"computing qdotr...\n";
-	for(unsigned int n=0; n<sim.frame(0).nAtoms(); ++n){
+	for(unsigned int n=0; n<atoms.size(); ++n){
 		unsigned int tt;
-		double ts=sim.timestep();
+		const double ts=sim.timestep();
 		//read the charge
 		for(unsigned int t=0; t<sim.timesteps(); ++t){
-			q[t]=sim.frame(t).charge(n);
+			q[t]=sim.frame(t).charge(atoms[n]);
 		}
 		//compute the charge velocity
 		tt=0; qv[tt]=(q[tt+1]-q[tt])/ts;
@@ -346,18 +366,18 @@ void IRQEQ::calcSpectrum(Simulation& sim){
 		tt=sim.timesteps()-1; qv[tt]=(q[tt]-q[tt-1])/ts;
 		//compute qdotr
 		for(unsigned int t=0; t<sim.timesteps(); ++t){
-			qdotr[t].noalias()+=qv[t]*sim.frame(t).posn(n);
+			qdotr[t].noalias()+=qv[t]*sim.frame(t).posn(atoms[n]);
 		}
 	}
 	
 	//compute qdotq
 	if(DEBUG_IR_QEQ>0) std::cout<<"computing rdotq...\n";
-	for(unsigned int n=0; n<sim.frame(0).nAtoms(); ++n){
+	for(unsigned int n=0; n<atoms.size(); ++n){
 		unsigned int tt;
-		double ts=sim.timestep();
+		const double ts=sim.timestep();
 		//read the position - fractional coordinates
 		for(unsigned int t=0; t<sim.timesteps(); ++t){
-			p[t].noalias()=sim.frame(t).cell().RInv()*sim.frame(t).posn(n);
+			p[t].noalias()=sim.frame(t).cell().RInv()*sim.frame(t).posn(atoms[n]);
 		}
 		//calculate the velocities - fractional coordinates
 		tt=0;
@@ -401,7 +421,7 @@ void IRQEQ::calcSpectrum(Simulation& sim){
 		for(unsigned int t=0; t<sim.timesteps(); ++t) v[t]=sim.frame(t).cell().R()*v[t];
 		//compute rdotq
 		for(unsigned int t=0; t<sim.timesteps(); ++t){
-			rdotq[t].noalias()+=v[t]*sim.frame(t).charge(n);
+			rdotq[t].noalias()+=v[t]*sim.frame(t).charge(atoms[n]);
 		}
 	}
 	
@@ -412,14 +432,14 @@ void IRQEQ::calcSpectrum(Simulation& sim){
 			fftMu[i].in(t)=qdotr[t][i]+rdotq[t][i];
 		}
 	}
-	FILE* reader=fopen("dipole-v.dat","w");
+	/*FILE* reader=fopen("dipole-v.dat","w");
 	if(reader!=NULL){
 		for(unsigned int t=0; t<sim.timesteps(); ++t){
 			fprintf(reader,"%i %f %f %f\n",t,fftMu[0].in(t),fftMu[1].in(t),fftMu[2].in(t));
 		}
 		fclose(reader);
 		reader=NULL;
-	}
+	}*/
 	
 	//compute the Fourier transform
 	if(DEBUG_IR_QEQ>0) std::cout<<"computing the forward Fourier transforms...\n";

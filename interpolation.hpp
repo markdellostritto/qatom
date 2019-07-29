@@ -16,7 +16,7 @@ namespace Interp{
 			AKIMA,
 			UNKNOWN
 		};
-		static type load(const char* str);
+		static type read(const char* str);
 	};
 	std::ostream& operator<<(std::ostream& out, const INTERP_METHOD::type& t);
 	

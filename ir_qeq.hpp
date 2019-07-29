@@ -128,6 +128,9 @@ private:
 		bool readChgA_;
 	//ir spectrum
 		std::vector<double> irSpectrum_;
+	//subset
+		std::string subsetstr_;
+		std::vector<unsigned int> subset_;
 public:
 	//constants
 	static const double mevPerThz;
@@ -173,6 +176,9 @@ public:
 	//temp
 		double& T(){return T_;}
 		const double& T()const{return T_;}
+	//subset
+		std::vector<unsigned int>& subset(){return subset_;}
+		const std::vector<unsigned int>& subset()const{return subset_;}
 	
 	//member functions
 		void defaults();

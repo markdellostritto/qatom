@@ -1,13 +1,10 @@
 #ifndef EIGEN_HPP
 #define EIGEN_HPP
 
-//c libraries
+#include <iostream>
 #include <cstdio>
 #include <cstdlib>
-//c++ libraries
-#include <iostream>
 #include <Eigen/Dense>
-//local libraries
 #include "string.hpp"
 #include "serialize.hpp"
 
@@ -15,19 +12,19 @@ namespace eigen{
 
 struct LIN_SOLVER{
 	enum type{
-		LLT=0,//cholesky decomposition
-		LDLT=1,//cholesky-variant
-		PPLU=2,//LU - partial pivoting
-		FPLU=3,//LU - full pivoting
-		HQR=4,//Householder QR
-		CPHQR=5,//Householder QR - column pivoting
-		UNKNOWN=-1
+		LLT,//cholesky decomposition
+		LDLT,//cholesky-variant
+		PPLU,//LU - partial pivoting
+		FPLU,//LU - full pivoting
+		HQR,//Householder QR
+		CPHQR,//Householder QR - column pivoting
+		UNKNOWN
 	};
-	static LIN_SOLVER::type load(const char* str);
+	static LIN_SOLVER::type read(const char* str);
 };
 std::ostream& operator<<(std::ostream& out, const LIN_SOLVER::type& t);
 
-Eigen::Vector3d& load(const char* str, Eigen::Vector3d& vec);
+Eigen::Vector3d& read(const char* str, Eigen::Vector3d& vec);
 
 const char* print(char* str, const Eigen::Vector3d& vec);
 

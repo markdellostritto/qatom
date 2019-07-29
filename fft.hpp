@@ -32,7 +32,7 @@ namespace fourier{
 			CMI,//inverse centimeters
 			UNKNOWN
 		};
-		static FreqUnit::type load(const char* str);
+		static FreqUnit::type read(const char* str);
 	};
 	
 	std::ostream& operator<<(std::ostream& out, const FreqUnit::type& t);

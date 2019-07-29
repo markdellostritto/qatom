@@ -28,19 +28,19 @@ struct ICC{
 		ERF=3,
 		UNKNOWN=-1
 	};
-	static Form load(const char* str);
+	static Form read(const char* str);
 	// Interaction matrices
-	static double itensor_ideal(const Eigen::Vector3d& dr, double a=1.0);
-	static double itensor_exp(const Eigen::Vector3d& dr, double a=1.0);
-	static double itensor_linear(const Eigen::Vector3d& dr, double a=1.0);
-	static double itensor_erf(const Eigen::Vector3d& dr, double a=1.0);
+	static double itensor_ideal(double dr, double a=1.0);
+	static double itensor_exp(double dr, double a=1.0);
+	static double itensor_linear(double dr, double a=1.0);
+	static double itensor_erf(double dr, double a=1.0);
 	// Scaling factors
 	static double scale_ideal(double alpha1, double alpha2);
 	static double scale_exp(double alpha1, double alpha2);
 	static double scale_linear(double alpha1, double alpha2);
 	static double scale_erf(double alpha1, double alpha2);
 	// Functions - Interaction matrices
-	static const std::function<double (const Eigen::Vector3d& r, double a)> iTensor[ICC_NUM];
+	static const std::function<double (double dr, double a)> iTensor[ICC_NUM];
 	// Functions - Scaling Factors
 	static const std::function<double (double a1, double a2)> scale[ICC_NUM];
 };

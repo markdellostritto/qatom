@@ -3,15 +3,15 @@
 //operators
 
 Cell& Cell::operator=(const Cell& cell){
-	init(cell.R(),cell.scale());
+	init(cell.R(),1.0);
 	return *this;
 }
 
 std::ostream& operator<<(std::ostream& out, const Cell& cell){
-	out<<"Scale = "<<cell.scale_<<"\n";
-	out<<"Cell Volume = "<<cell.vol_<<"\n";
-	out<<"LV = \n"<<cell.R_<<"\n";
-	out<<"LVK = \n"<<cell.K_;
+	out<<"scale  = "<<cell.scale_<<"\n";
+	out<<"volume = "<<cell.vol_<<"\n";
+	out<<"R      = \n"<<cell.R_<<"\n";
+	out<<"K      = \n"<<cell.K_;
 	return out;
 }
 
@@ -45,7 +45,7 @@ void Cell::init(const Eigen::Matrix3d& R, double scale){
 	K_.col(1)=2*num_const::PI*R_.col(2).cross(R_.col(0))/(R_.col(1).dot(R_.col(2).cross(R_.col(0))));
 	K_.col(2)=2*num_const::PI*R_.col(0).cross(R_.col(1))/(R_.col(2).dot(R_.col(0).cross(R_.col(1))));
 	KInv_.noalias()=K_.inverse();
-	vol_=R_.determinant();
+	vol_=std::fabs(R_.determinant());
 }
 
 void Cell::init(const Eigen::Vector3d& R1,const Eigen::Vector3d& R2,const Eigen::Vector3d& R3, double scale){
@@ -58,12 +58,10 @@ void Cell::init(const Eigen::Vector3d& R1,const Eigen::Vector3d& R2,const Eigen:
 	K_.col(1)=2*num_const::PI*R_.col(2).cross(R_.col(0))/(R_.col(1).dot(R_.col(2).cross(R_.col(0))));
 	K_.col(2)=2*num_const::PI*R_.col(0).cross(R_.col(1))/(R_.col(2).dot(R_.col(0).cross(R_.col(1))));
 	KInv_.noalias()=K_.inverse();
-	vol_=R_.determinant();
+	vol_=std::fabs(R_.determinant());
 }
 
-//****************************************************************
-//Specialization for Eigen objects, thread safe (except for dist w/o temp vector provided)
-//****************************************************************
+//static functions - vectors
 
 Eigen::Vector3d& Cell::sum(const Eigen::Vector3d& v1, const Eigen::Vector3d& v2, Eigen::Vector3d& sum, const Eigen::Matrix3d& R, const Eigen::Matrix3d& RInv){
 	//find sum (in fractional coordinates)
@@ -131,6 +129,32 @@ Eigen::Vector3d& Cell::fracToCart(const Eigen::Vector3d& vFrac, Eigen::Vector3d&
 Eigen::Vector3d& Cell::cartToFrac(const Eigen::Vector3d& vCart, Eigen::Vector3d& vFrac, const Eigen::Matrix3d& RInv){
 	vFrac=RInv*vCart;//not assuming vCart!=vFrac
 	return vFrac;
+}
+
+//static functions - modification
+
+Cell& Cell::super(const Eigen::Vector3i& f, Cell& cell){
+	Eigen::Matrix3d R=cell.R();
+	R.col(0)*=f[0];
+	R.col(1)*=f[1];
+	R.col(2)*=f[2];
+	cell.init(R);
+	return cell;
+}
+
+bool Cell::rect(Cell& cell){
+	double d=cell.R().determinant();
+	double p=cell.R()(0,0)*cell.R()(1,1)*cell.R()(2,2);
+	if(std::fabs(d-p)<num_const::ZERO) return true;
+	else return false;
+}
+
+bool Cell::cubic(Cell& cell){
+	double d=std::pow(cell.R().determinant(),1.0/3.0);
+	if(std::fabs(d-cell.R()(0,0))>num_const::ZERO) return false;
+	else if(std::fabs(d-cell.R()(1,2))>num_const::ZERO) return false;
+	else if(std::fabs(d-cell.R()(1,2))>num_const::ZERO) return false;
+	else return true;
 }
 
 namespace serialize{

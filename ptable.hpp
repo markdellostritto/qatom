@@ -1,10 +1,9 @@
 #ifndef PERIODIC_TABLE_HPP
 #define PERIODIC_TABLE_HPP
 
-#include <limits>
 #include <cstring>
 #include <cmath>
-#include <vector>
+#include <limits>
 #include <iostream>
 
 namespace PTable{
@@ -15,36 +14,6 @@ namespace PTable{
 
 static const float inf=std::numeric_limits<float>::max();
 static const unsigned int NUM_ELEMENTS=118;
-
-static const unsigned int ATOMIC_NUMBER[NUM_ELEMENTS]={
-	1,2,3,4,5,6,7,8,9,10,
-	11,12,13,14,15,16,17,18,19,20,
-	21,22,23,24,25,26,27,28,29,30,
-	31,32,33,34,35,36,37,38,39,40,
-	41,42,43,44,45,46,47,48,49,50,
-	51,52,53,54,55,56,57,58,59,60,
-	61,62,63,64,65,66,67,68,69,70,
-	71,72,73,74,75,76,77,78,79,80,
-	81,82,83,84,85,86,87,88,89,90,
-	91,92,93,94,95,96,97,98,99,100,
-	101,102,103,104,105,106,107,108,109,110,
-	111,112,113,114,115,116,117,118
-};
-
-static const unsigned int PERIOD[NUM_ELEMENTS]={
-	1,1,2,2,2,2,2,2,2,2,
-	3,3,3,3,3,3,3,3,4,4,
-	4,4,4,4,4,4,4,4,4,4,
-	4,4,4,4,4,4,5,5,5,5,
-	5,5,5,5,5,5,5,5,5,5,
-	5,5,5,5,6,6,6,6,6,6,
-	6,6,6,6,6,6,6,6,6,6,
-	6,6,6,6,6,6,6,6,6,6,
-	6,6,6,6,6,6,7,7,7,7,
-	7,7,7,7,7,7,7,7,7,7,
-	7,7,7,7,7,7,7,7,7,7,
-	7,7,7,7,7,7,7,7
-};
 
 static const char* const ELEMENT_NAME[NUM_ELEMENTS]={
 	"H","He","Li","Be","B","C","N","O","F","Ne",
@@ -63,7 +32,7 @@ static const char* const ELEMENT_NAME[NUM_ELEMENTS]={
 
 static const float ELEMENT_MASS[NUM_ELEMENTS]={
 	1.0079,4.0026,6.941,9.0122,10.811,12.0107,14.0067,15.9994,18.9984,20.1797,
-	22.9897,24.305,26.9815,28.0855,30.9738,32.065,35.453,39.0983,39.948,40.078,
+	22.9897,24.305,26.9815,28.0855,30.9738,32.065,35.453,39.948,39.0983,40.078,
 	44.9559,47.867,50.9415,51.9961,54.938,55.845,58.6934,58.9332,63.546,65.39,
 	69.723,72.64,74.9216,78.96,79.904,83.8,85.4678,87.62,88.9059,91.224,
 	92.9064,95.94,98,101.07,102.9055,106.42,107.8682,112.411,114.818,118.71,
@@ -91,39 +60,6 @@ static const float ATOMIC_RADII[NUM_ELEMENTS]={
 //Angstrom
 //E Clementi, D L Raimondi, W P Reinhardt (1963) J Chem Phys. 38:2686.
 
-static const float IONIC_RADII[NUM_ELEMENTS]={
-	0.25,	0.31,	1.45,	1.05,	0.85,	0.7,	0.65,	0.6,	0.5,	0.38,
-	1.8,	1.5,	1.25,	1.1,	1,	1,	1,	0.71,	2.2,	1.8,
-	1.6,	1.4,	1.35,	1.4,	1.4,	1.4,	1.35,	1.35,	1.35,	1.35,
-	1.3,	1.25,	1.15,	1.15,	1.15,	0.88,	2.35,	2,	1.85,	1.55,
-	1.45,	1.45,	1.35,	1.3,	1.35,	1.4,	1.6,	1.55,	1.55,	1.45,
-	1.45,	1.4,	1.4,	1.08,	2.6,	2.15,	1.95,	1.85,	1.85,	1.85,
-	1.85,	1.85,	1.85,	1.8,	1.75,	1.75,	1.75,	1.75,	1.75,	1.75,
-	1.75,	1.55,	1.45,	1.35,	1.35,	1.3,	1.35,	1.35,	1.35,	1.5,
-	1.9,	1.8,	1.6,	1.9,	1.27,	1.2,	0,	2.15,	1.95,	1.8,
-	1.8,	1.75,	1.75,	1.75,	1.75,	0
-};
-//Angstrom
-//J C Slater (1964) J Chem Phys 41:3199
-//J C Slater (1965) Quantum Theory of Molecules and Solids. Symmetry and Bonds in Crystals. Vol 2. McGraw-Hill, New York.
-//E Clementi, D L Raimondi, W P Reinhardt (1963) J Chem Phys 38:2686
-
-static const float CRYSTAL_RADII[NUM_ELEMENTS]={
-	0.1,	0,	0.9,	0.41,	0.25,	0.29,	0.3,1.21,	1.19,	0,
-	1.16,	0.86,	0.53,	0.4,	0.31,	0.43,	1.67,	0,	1.52,	1.14,
-	0.89,	0.75,	0.68,	0.76,	0.81,	0.69,	0.54,	0.7,	0.71,	0.74,
-	0.76,	0.53,	0.72,	0.56,	1.82,	0,	1.66,	1.32,	1.04,	0.86,
-	0.78,	0.79,	0.79,	0.82,	0.81,	0.78,	1.29,	0.92,	0.94,	0.69,
-	0.9,	1.11,	2.06,	0.62,	1.81,	1.49,	1.36,	1.15,	1.32,	1.3,
-	1.28,	1.1,	1.31,	1.08,	1.18,	1.05,	1.04,	1.03,	1.02,	1.13,
-	1,	0.85,	0.78,	0.74,	0.77,	0.77,	0.77,	0.74,	1.51,	0.83,
-	1.03,	1.49,	1.17,	1.08,	0.76,	0,	1.94,	1.62,	1.26,	1.19,
-	1.09,	0.87,	0,	1,	1.12,	1.11
-};
-//Angstrom
-//R D Shannon and C T Prewitt (1969) Acta Cryst. B25:925-946
-//R D Shannon (1976) Acta Cryst. A23:751-761
-
 static const float COVALENT_RADII[NUM_ELEMENTS]={
 	0.37,	0.32,	1.34,	0.9,	0.82,	0.77,	0.75,	0.73,	0.71,	0.69,
 	1.54,	1.3,	1.18,	1.11,	1.06,	1.02,	0.99,	0.97,	1.96,	1.74,
@@ -138,21 +74,6 @@ static const float COVALENT_RADII[NUM_ELEMENTS]={
 };
 //Angstrom
 //WebElements
-
-static const float VDW_RADII[NUM_ELEMENTS]={
-	1.2,	1.4,	1.82,	0,	0,	1.7,	1.55,	1.52,	1.47,	1.54,
-	2.27,	1.73,	0,	2.1,	1.8,	1.8,	1.75,	1.88,	2.75,	0,
-	0,	0,	0,	0,	0,	0,	0,	1.63,	1.4,	1.39,
-	1.87,	0,	1.85,	1.9,	1.85,	2.02,	0,	0,	0,	0,
-	0,	0,	0,	0,	0,	1.63,	1.72,	1.58,	1.93,	2.17,
-	0,	2.06,	1.98,	2.16,	0,	0,	0,	0,	0,	0,
-	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,
-	0,	0,	0,	0,	0,	0,	0,	1.75,	1.66,	1.55,
-	1.96,	2.02,	0,	0,	0,	0,	0,	0,	0,	0,
-	0,	1.86,	0,	0,	0,	0
-};
-//Angstrom
-//A Bondi (1964) J Phys Chem 68:441
 
 static const float IONIZATION_ENERGY[NUM_ELEMENTS]={
 	13.598434005136,24.587387936,5.391714761,9.322699,8.298019,11.2603,14.53413,13.618054,17.42282,21.56454,
@@ -172,20 +93,6 @@ static const float IONIZATION_ENERGY[NUM_ELEMENTS]={
 //Kramida, A., Ralchenko, Yu., Reader, J., and NIST ASD Team (2014). NIST Atomic Spectra Database (ver. 5.2), [Online]. 
 //Available: https://physics.nist.gov/asd [2017, August 9]. National Institute of Standards and Technology, Gaithersburg, MD. 
 
-/*static const float ELECTRON_AFFINITY[NUM_ELEMENTS]={
-	0.754195,-inf,0.618049,-inf,0.279723,1.2621226,-inf,1.4611136,3.4011898,-inf,
-	0.547926,-inf,0.43283,1.3895212,0.746607,2.0771042,3.612724,-inf,0.501459,0.02455,
-	0.188,0.084,0.52766,0.67584,-1,0.153236,0.66226,1.15716,1.23578,-inf,
-	0.43,1.2326764,0.8048,2.0206047,3.363588,-inf,0.485916,0.05206,0.307,0.427,
-	0.9174,0.7473,0.636,1.04638,1.14289,0.56214,1.30447,-inf,0.38392,1.11207,
-	1.047401,1.970875,3.0590465,-0.056,0.47163,0.14462,0.55,0.57,0.962,0.162,
-	0.129,0.162,0.116,0.137,0.436,0.352,0.338,0.312,1.029,0,
-	0.346,0.114,0.323,0.81626,0.15,1.0778,1.56436,2.1251,2.30861,-inf,
-	0.377,0.356743,0.942362,1.405,2.42,-inf,0.491,0.1,-inf,-inf,
-	-inf,-inf,-inf,-inf,-inf,-inf,-inf,-inf,-inf,-inf,
-	-inf,-inf,-inf,-inf,-inf,-inf,-inf,-inf,-inf,-inf,
-	-inf,-inf,-inf,-inf,-inf,-inf,-inf,-inf
-};*/
 static const float ELECTRON_AFFINITY[NUM_ELEMENTS]={
 	0.754195,-0.52,0.618049,-0.52,0.279723,1.2621226,-0.000725,1.4611136,3.4011898,-1.2,
 	0.547926,-0.415,0.43283,1.3895212,0.746607,2.0771042,3.612724,-1,0.501459,0.02455,
@@ -235,52 +142,6 @@ static const float ELECTRONEGATIVITY_ALLEN[NUM_ELEMENTS]{
 	-inf,-inf,-inf,-inf,-inf,-inf,-inf,-inf
 };
 
-static const float CM5[NUM_ELEMENTS]={
-	0.0056,-0.1543,0,0.0333,-0.103,-0.0466,-0.1072,-0.0802,-0.0629,-0.1088,
-	0.0184,0,-0.0726,-0.079,-0.0756,-0.0565,-0.0444,-0.0767,0.013,0,
-	0,0,0,0,0,0,0,0,0,0,
-	-0.0512,-0.0557,-0.0533,-0.0399,-0.0313,-0.0514,0.0092,0,0,0,
-	0,0,0,0,0,0,0,0,-0.0361,-0.0393,
-	-0.0376,-0.0281,-0.022,-0.0381,0.0065,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,
-	-0.0255,-0.0277,-0.0265,-0.0198,-0.0155,-0.0269,0.0046,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,
-	0,0,-0.0179,-0.0195,-0.0187,-0.014,-0.011,-0.0189
-};
-
-static const float ZEFF[NUM_ELEMENTS]={
-	1,1.34466,0.975494,1.28272,1.21018,1.40973,1.60161,1.55031,1.75356,1.95088,
-	1.37462,1.67673,1.48354,1.73127,1.96363,1.95173,2.18359,2.40721,0,0,
-	0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0
-};
-
-//wB97xD,Aug-cc-pVTZ,Numeric
-static const float ALPHA[NUM_ELEMENTS]={
-	0.7606809353,0.2171775313,25.1539621871,6.6760633078,3.3439975002,1.8615957149,1.1345885033,0.7768849437,0.5352711282,0.3788386435,
-	30.0167931049,15.3008414512,8.9477924532,5.489067139,3.8646101146,2.9492005878,2.1910199787,1.6535164694,0,0,
-	0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0
-};
-
 //*********************************************
 //Enums
 //*********************************************
@@ -293,7 +154,7 @@ struct ElectronegativityType{
 		HINZE,
 		UNKNOWN
 	};
-	static ElectronegativityType::type load(const char* str);
+	static ElectronegativityType::type read(const char* str);
 };
 
 std::ostream& operator<<(std::ostream& out, const ElectronegativityType::type& t);
@@ -302,24 +163,16 @@ std::ostream& operator<<(std::ostream& out, const ElectronegativityType::type& t
 //Function
 //*********************************************
 
-//********** NAME **********
-//name
-const char* elementName(unsigned int an);
-const char* elementNameMass(double mass);
+//************** NAME ***************
+const char* name(unsigned int atomicNumber);
 //********** ATOMIC_NUMBER **********
-//atomic number 
-int an(const char* name);
+unsigned int an(const char* name);
 unsigned int an(double mass);
-//period
-unsigned int period(unsigned int an);
-//********** MASS **********
-//mass 
-double elementMass(unsigned int an);
-//********** RADIUS **********
-//atomic radius
-double atomicRadius(unsigned int an);
-//covalent radius
-double covalentRadius(unsigned int an);
+//************** MASS ***************
+double mass(unsigned int atomicNumber);
+//************* RADIUS **************
+double atomicRadius(unsigned int atomicNumber);
+double covalentRadius(unsigned int atomicNumber);
 //********** IONIZATION_ENERGY **********
 //ionization energy
 double ionizationEnergy(unsigned int an);
@@ -339,27 +192,11 @@ double electronegativityPauling(unsigned int an);
 double electronegativityAllen(unsigned int an);
 //electronegativity - Hinze
 double electronegativityHinze(unsigned int an, unsigned int vs);
-//********** ALPHA **********
-double alpha(unsigned int an);
-//********** HARDNESS **********
-//hardness
-double hardness(unsigned int an);
 //********** IDEMPOTENTIAL **********
 //idempotential (coulomb self-energy)
 double idempotential(unsigned int an);
 //idempotential Hinze (coulomb self-energy)
 double idempotentialHinze(unsigned int an, unsigned int vs);
-//shell configuration
-std::vector<unsigned int>& shell(unsigned int an, std::vector<unsigned int>& c);
-//********** Z_EFF **********
-//zEff - outer shell
-double zEff(unsigned int an);
-//zEff - any shell
-double zEff(unsigned int an, unsigned int shell);
-double zEffDello(unsigned int an);
-double zSlaterC(unsigned int an);
-//cm5 parameters
-double cm5(unsigned int an);
 
 }
 

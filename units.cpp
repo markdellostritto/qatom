@@ -4,7 +4,7 @@ namespace units{
 
 //System
 
-System::type System::load(const char* str){
+System::type System::read(const char* str){
 	if(std::strcmp(str,"AU")==0) return System::AU;
 	else if(std::strcmp(str,"METAL")==0) return System::METAL;
 	else if(std::strcmp(str,"IDENTITY")==0) return System::IDENTITY;

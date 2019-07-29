@@ -138,6 +138,10 @@ private:
 		std::vector<std::vector<std::vector<std::vector<Complex> > > > chi2_;
 	//temperature
 		double T_;
+	//subset
+		bool subsetf_;
+		std::string subsetstr_;
+		std::vector<unsigned int> subset_;
 public:
 	//constants
 	static const double mevPerThz;
@@ -195,6 +199,9 @@ public:
 	//temperature
 		double& T(){return T_;}
 		const double& T()const{return T_;}
+	//subset
+		std::vector<unsigned int>& subset(){return subset_;}
+		const std::vector<unsigned int>& subset()const{return subset_;}
 	
 	//member functions
 		void defaults();

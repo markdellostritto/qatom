@@ -6,15 +6,15 @@ namespace special{
 	//Complementary Error Function - Approximations
 	//**************************************************************
 	
-	const double erfca_const::a1[5]={1.0,0.278393,0.230389,0.000972,0.078108};
-	const double erfca_const::a2[5]={0.0,0.3480242,-0.0958798,0.7478556,0.47047};
-	const double erfca_const::a3[7]={0.0,0.0705230784,0.0422820123,0.0092705272,0.0001520143,0.0002765672,0.0000430638};
-	const double erfca_const::a4[7]={0.0,0.254829592,-0.284496736,1.421413741,-1.453152027,1.061405429,0.3275911};
+	const double erfa_const::a1[5]={1.0,0.278393,0.230389,0.000972,0.078108};
+	const double erfa_const::a2[5]={0.0,0.3480242,-0.0958798,0.7478556,0.47047};
+	const double erfa_const::a3[7]={1.0,0.0705230784,0.0422820123,0.0092705272,0.0001520143,0.0002765672,0.0000430638};
+	const double erfa_const::a4[7]={0.0,0.254829592,-0.284496736,1.421413741,-1.453152027,1.061405429,0.3275911};
 	
-	double erfca1(double x){x=function::poly<4>(x,erfca_const::a1); return 1.0/(x*x*x*x);}
-	double erfca2(double x){return function::poly<3>(1.0/(1.0+erfca_const::a2[4]*x),erfca_const::a2)*std::exp(-x*x);}
-	double erfca3(double x){x=function::poly<6>(x,erfca_const::a3); x*=x; x*=x; x*=x; return 1.0/(x*x);}
-	double erfca4(double x){return function::poly<6>(1.0/(1.0+erfca_const::a4[4]*x),erfca_const::a2)*std::exp(-x*x);}
+	double erfa1(double x){double s=sign(x); x*=s; x=function::poly<4>(x,erfa_const::a1); x*=x; x*=x; return s*(1.0-1.0/x);}
+	double erfa2(double x){double s=sign(x); x*=s; return s*(1.0-function::poly<3>(1.0/(1.0+erfa_const::a2[4]*x),erfa_const::a2)*std::exp(-x*x));}
+	double erfa3(double x){double s=sign(x); x*=s; x=function::poly<6>(x,erfa_const::a3); x*=x; x*=x; x*=x; x*=x; return s*(1.0-1.0/x);}
+	double erfa4(double x){double s=sign(x); x*=s; return s*(1.0-function::poly<5>(1.0/(1.0+erfa_const::a4[6]*x),erfa_const::a4)*std::exp(-x*x));}
 	
 	//**************************************************************
 	//Kummer's (confluent hypergeometric) function 

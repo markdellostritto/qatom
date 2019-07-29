@@ -10,7 +10,8 @@ const double ICC::erf_const=std::sqrt(2.0/num_const::PI);
 // Form
 //*******************************************************
 	
-ICC::Form ICC::load(const char* str){
+ICC::Form ICC::read(const char* str){
+	//std::cout<<"str = "<<str<<"\n";
 	if(std::strcmp(str,"IDEAL")==0) return ICC::Form::IDEAL;
 	else if(std::strcmp(str,"LINEAR")==0) return ICC::Form::LINEAR;
 	else if(std::strcmp(str,"EXP")==0) return ICC::Form::EXP;
@@ -31,26 +32,24 @@ std::ostream& operator<<(std::ostream& out, const ICC::Form& t){
 // Interaction matrices
 //*******************************************************
 
-double ICC::itensor_ideal(const Eigen::Vector3d& r, double a){
+double ICC::itensor_ideal(double dr, double a){
 	if(DEBUG_ICC>0) std::cout<<"ICC::itensor_ideal(const Eigen::Vector3d&,double):\n";
-	return 1.0/r.norm();
+	return 1.0/dr;
 }
 
-double ICC::itensor_exp(const Eigen::Vector3d& r, double a){
+double ICC::itensor_exp(double dr, double a){
 	if(DEBUG_ICC>0) std::cout<<"ICC::itensor_exp(const Eigen::Vector3d&,double):\n";
-	double dr=r.norm();
 	//return boost::math::expint(-a*dr)-0.5*std::exp(-a*dr)*(3.0+a*dr)-std::log(dr);
 	return 0;
 }
 
-double ICC::itensor_linear(const Eigen::Vector3d& r, double a){
+double ICC::itensor_linear(double dr, double a){
 	if(DEBUG_ICC>0) std::cout<<"ICC::itensor_linear(const Eigen::Vector3d&,double):\n";
 	return 0.0;//NOT YET IMPLEMENTED
 }
 
-double ICC::itensor_erf(const Eigen::Vector3d& r, double a){
+double ICC::itensor_erf(double dr, double a){
 	if(DEBUG_ICC>0) std::cout<<"ICC::itensor_erf(const Eigen::Vector3d&,double):\n";
-	double dr=r.norm();
 	return std::erf(dr*a)/dr;
 }
 
@@ -75,14 +74,14 @@ double ICC::scale_linear(double c1, double c2){
 
 double ICC::scale_erf(double c1, double c2){
 	if(DEBUG_ICC>0) std::cout<<"ICC::scale_erf(const Eigen::Vector3d&,double):\n";
-	return 1.0/(erf_const*std::sqrt(c1*c1+c2*c2));
+	return 1.0/(std::sqrt(2.0)*erf_const*std::sqrt(c1*c1+c2*c2));
 }
 
 //*******************************************************
 // Function - Interaction Tensors
 //*******************************************************
 
-const std::function<double (const Eigen::Vector3d& r, double a)> ICC::iTensor[ICC_NUM]={
+const std::function<double (double dr, double a)> ICC::iTensor[ICC_NUM]={
 	itensor_ideal,
 	itensor_linear,
 	itensor_exp,

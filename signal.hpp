@@ -5,10 +5,9 @@
 #include <cstdlib>
 #include <cmath>
 #include <cstring>
+#include <vector>
 //c++ libraries
 #include <iostream>
-#include <vector>
-//#include <boost/math/special_functions/bessel.hpp>
 //math
 #include "math_const.hpp"
 
@@ -39,7 +38,7 @@ namespace window{
 			BLACKMANHARRIS,
 			UNKNOWN
 		};
-		static WINDOW_FUNC::type load(const char* str);
+		static WINDOW_FUNC::type read(const char* str);
 	};
 	
 	std::ostream& operator<<(std::ostream& out, const WINDOW_FUNC::type t);
@@ -58,19 +57,16 @@ namespace window{
 		double operator()(unsigned int t)const{return 1.0;};
 	};
 	
-	class KaiserBessel: public Functor{
+	/*class KaiserBessel: public Functor{
 	public:
 		double alpha;
 		KaiserBessel():alpha(1.0){};
 		KaiserBessel(unsigned int n, double a):Functor(n),alpha(a){};
 		double operator()(unsigned int t)const{
-			/*
 			return boost::math::cyl_bessel_i(0,num_const::PI*alpha*std::sqrt(1.0-(2.0*t/(N-1.0)-1.0)*(2.0*t/(N-1.0)-1.0)))
 			/boost::math::cyl_bessel_i(0,num_const::PI*alpha);
-			*/
-			return 1;
 		};
-	};
+	};*/
 	
 	class BlackmanHarris: public Functor{
 	public:
