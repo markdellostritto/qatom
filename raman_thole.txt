@@ -1,0 +1,41 @@
+# general parameters
+SIM		H2O_cp_md_nve.xdatcar # simulation
+FORMAT		XDATCAR # file format
+OFFSET		0 0 0 # offset applied to atomic positions
+INTERVAL	1:-1:1 # timestep interval for performing calculations (needs to be a multiple of STRIDE_ALPHA plus 1)
+VERSION		2 # type of calculation (keep on 2)
+UNITS		AU # units used in calculation (AU = atomic units)
+
+# alpha
+ALPHA		O 5.57999
+ALPHA		H 3.12865
+
+# files
+FILE_SPECTRUM	raman_thole.dat # file storing raman spectrum
+FILE_ALPHA_TOT	alpha_thole.dat # file storing total polarizability
+FILE_ALPHA_ATOM	alpha_atom.dat # file storing atomic polarizabilities
+
+# dipole interactions
+A		1 # scaling constant
+IDD		ERF # type of dipole-dipole interaction
+INTER		T # include dipole-dipole interactions in polarizability calculations
+ALPHA_R		T # whether to scale atomic polarizability w.r.t. atom volume
+LIN_SOLVER	PPLU # type if linear solver
+
+# ewald 
+PREC_EWALD	0.00001 # precision of the ewald calculation
+
+# flags
+CALC_ALPHA		T # whether to calculate effective polarizabilities
+CALC_SPECTRUM		T # whether to calculate the spectrum
+WRITE_ALPHA_TOT		T # whether to write total polarizability
+WRITE_ALPHA_ATOM	F # whether to write atomic polarizability
+READ_ALPHA_ATOM		F # whether to read atomic polarizability
+
+# Fourier Parameters
+STRIDE_ALPHA	5 # electrostatics will be calculated every "n" timesteps
+FREQ_UNIT	THZ # unit of the frequency
+FREQ_CUT	140 # upper cutoff for printing the frequency (in frequency units)
+WINDOW		BLACKMAN-HARRIS # fourier transform window
+NORMALIZE	F # whether to normalize the spectrum
+

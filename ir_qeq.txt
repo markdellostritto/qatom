@@ -1,0 +1,36 @@
+# General Simulation Parameters
+SIM		H2O_cp_md_nve.xdatcar # simulation
+FORMAT		XDATCAR # file format
+INTERVAL	1:-1:1 # timestep interval
+OFFSET		0 0 0 # offset applied to atomic positions
+UNITS		AU # unit system
+
+# jzero
+JZERO		O 0.636241
+JZERO		H 0.691945
+
+# qeq
+K		1 # scaling constant (keep on 1)
+ICC		ERF # coulomb-coulomb interaction type
+SCALE_R		F # whether to scale chi (keep false)
+LIN_SOLVER	PPLU # linear solver
+CHI		MULLIKEN # electronegativity type (keep on MULLIKEN)
+
+# ewald
+PREC_EWALD	0.00001 # ewald precision
+
+# flags
+CALC_CHG		T # whether to compute the charge
+CALC_SPECTRUM		T # whether to compute the spectrum
+WRITE_DIPOLE_TOT	T # whether to write the total dipole
+WRITE_CHG_TOT		T # whether to write the total charge
+WRITE_CHG_ATOM		F # whether to write the atomic charge
+READ_CHG_ATOM		F # whether to read the atomic charge
+
+# Fourier Parameters
+STRIDE_CHARGE	5 # calc dipole every "n" steps
+FREQUNIT	THZ # unit of the frequency
+FREQ_CUT	140 # upper cutoff for printing the frequency (in frequency units)
+WINDOW		BLACKMAN-HARRIS # windowing function
+NORMALIZE	T # whether to normalize the spectrum
+
